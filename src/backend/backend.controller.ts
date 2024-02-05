@@ -45,11 +45,11 @@ export class BackendController {
   @Get()
   test() {
     const test1 = this.configService.get<string>('CLICKHOUSE_USERNAME');
-    return 'Hello from here ' + test1;
+    return moment.unix(1707113455).format('YYYY-MM-DD HH:MM:SS');
   }
   @Post('db')
   async insertDb(@Body() body) {
-    const book = await this.backendservice.insertdB(body.query);
+    const book = await this.backendservice.insertdB(body.query, body.gptModel);
     return book;
   }
   // @Get('Testdb')
@@ -61,7 +61,7 @@ export class BackendController {
   async getByDate(@Body() body) {
     console.log("anml", body);
     if(!("startDate" in body) || !("endDate" in body)){
-      body["startDate"] = moment().subtract(1, 'days');;
+      body["startDate"] = moment().subtract(1, 'days');
       body["endDate"] = moment();
     }
     body["startDate"] = moment(body["startDate"]).format('YYYY-MM-DD HH:MM:SS');

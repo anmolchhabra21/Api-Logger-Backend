@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createClient } from '@clickhouse/client';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import moment from 'moment';
+import * as moment from 'moment';
 
 @Injectable()
 export class BackendService {
@@ -23,27 +23,28 @@ export class BackendService {
     });
   }
 
-  async insertdB(request: string) {
+  async insertdB(request: string, gptModel: string) {
     const data = await this.testGPT(request);
+    console.log("anmol", typeof(data.created), data.created)
     const test = await this.client.insert({
       table: 'gpt_response_db',
       // structure should match the desired format, JSONEachRow in this example
       values: [
         {
           request: request,
-          model: data.model,
+          model: gptModel,
           status: true,
           prompt_tokens: data.usage.prompt_tokens,
           completion_tokens: data.usage.completion_tokens,
           total_tokens: data.usage.total_tokens,
           response: data.choices[0].message.content,
-          created_at: moment(data.created).format('YYYY-MM-DD HH:MM:SS'),
+          created_at: moment.unix(data.created).format('YYYY-MM-DD HH:MM:SS'),
         },
       ],
       format: 'JSONEachRow',
     });
     console.log('1st entry', test);
-    return test;
+    return {test, data};
   }
 
   async testGPT(query: string) {
