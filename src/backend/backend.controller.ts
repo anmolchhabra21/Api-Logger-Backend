@@ -10,53 +10,16 @@ export class BackendController {
     private configService: ConfigService,
     private backendservice: BackendService,
   ) {}
-  // @Post('query')
-  // async query(@Body() requestBody: any): Promise<any> {
-  //     try{
-  //         const openaiResponse = await axios.post('https://api.openai.com/v1/engines/davinci-codex/completions', {
-  //             prompt: requestBody.prompt,
-  //         });
-
-  //         const requestData = {
-  //             prompt: requestBody.prompt,
-  //             tokensCount: openaiResponse.data.choices[0].usage.total_tokens,
-  //             responseLatency: openaiResponse.headers['x-response-time'],
-  //             metadata: requestBody.metadata,
-  //             success: true,
-  //         };
-  //         logToClickhouse(requestData);
-
-  //         return openaiResponse.data;
-  //     } catch (error) {
-  //         // Handle errors
-  //         const requestData = {
-  //           prompt: requestBody.prompt,
-  //           tokensCount: 0,
-  //           responseLatency: 0,
-  //           metadata: requestBody.metadata,
-  //           success: false,
-  //         };
-  //         logToClickhouse(requestData);
-
-  //         throw new Error('Internal Server Error');
-  //       }
-  //     }
-  // }
   @Get()
   test() {
     const test1 = this.configService.get<string>('CLICKHOUSE_USERNAME');
-    return moment.unix(1707113455).format('YYYY-MM-DD HH:MM:SS');
+    return moment.unix(1707113455).format('YYYY-MM-DD HH:mm:ss');
   }
   @Post('db')
   async insertDb(@Body() body) {
-    const book = await this.backendservice.insertdB(body.query, body.gptModel);
+    const book = await this.backendservice.insertdB(body.query, body.gptModel, body.user);
     return book;
   }
-  // @Get('Testdb')
-  // async testDb() {
-  //     const book = await this.backendservice.testGPT();
-  //     return book;
-  // }
   @Post('gpt')
   async getByDate(@Body() body) {
     console.log("anml", body);
@@ -64,11 +27,8 @@ export class BackendController {
       body["startDate"] = moment().subtract(1, 'days');
       body["endDate"] = moment();
     }
-    body["startDate"] = moment(body["startDate"]).format('YYYY-MM-DD HH:MM:SS');
-    // body["startDate"] = moment(body["startDate"]);
-    // console.log("piyush", body["startDate"])
-    body["endDate"] = moment(body["endDate"]).format('YYYY-MM-DD HH:MM:SS');
-    console.log("piyush", body["startDate"], body["endDate"])
+    body["startDate"] = moment(body["startDate"]).format('YYYY-MM-DD HH:mm:ss');
+    body["endDate"] = moment(body["endDate"]).format('YYYY-MM-DD HH:mm:ss');
 
     const book = await this.backendservice.getByDate(body["startDate"], body["endDate"]);
     return book;

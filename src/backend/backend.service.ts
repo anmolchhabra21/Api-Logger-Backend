@@ -23,7 +23,7 @@ export class BackendService {
     });
   }
 
-  async insertdB(request: string, gptModel: string) {
+  async insertdB(request: string, gptModel: string, user: string) {
     const data = await this.testGPT(request);
     console.log("anmol", typeof(data.created), data.created)
     const test = await this.client.insert({
@@ -38,12 +38,13 @@ export class BackendService {
           completion_tokens: data.usage.completion_tokens,
           total_tokens: data.usage.total_tokens,
           response: data.choices[0].message.content,
-          created_at: moment.unix(data.created).format('YYYY-MM-DD HH:MM:SS'),
+          created_at: moment.unix(data.created).format('YYYY-MM-DD HH:mm:ss'),
+          user: user,
         },
       ],
       format: 'JSONEachRow',
     });
-    console.log('1st entry', test);
+    // console.log('1st entry', test);
     return {test, data};
   }
 
