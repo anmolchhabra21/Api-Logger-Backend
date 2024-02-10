@@ -14,53 +14,67 @@ export class BackendService {
       apiKey: this.configService.get<string>('GPT_KEY'),
     });
     this.client = createClient({
-      host:
-        this.configService.get<string>('CLICKHOUSE_HOST') ??
-        'http://localhost:8123',
-      username:
-        this.configService.get<string>('CLICKHOUSE_USERNAME') ?? 'default',
+      host: this.configService.get<string>('CLICKHOUSE_HOST') ?? 'http://localhost:8123',
+      username: this.configService.get<string>('CLICKHOUSE_USERNAME') ?? 'default',
       password: this.configService.get<string>('CLICKHOUSE_PASSWORD') ?? '',
     });
   }
 
-  async insertdB(request: string, gptModel: string, user: string) {
-    const data = await this.testGPT(request);
-    console.log("anmol", typeof(data.created), data.created)
-    const test = await this.client.insert({
-      table: 'gpt_response_db',
-      // structure should match the desired format, JSONEachRow in this example
-      values: [
-        {
-          request: request,
-          model: gptModel,
-          status: true,
-          prompt_tokens: data.usage.prompt_tokens,
-          completion_tokens: data.usage.completion_tokens,
-          total_tokens: data.usage.total_tokens,
-          response: data.choices[0].message.content,
-          created_at: moment.unix(data.created).format('YYYY-MM-DD HH:mm:ss'),
-          user: user,
-        },
-      ],
-      format: 'JSONEachRow',
-    });
-    // console.log('1st entry', test);
-    return {test, data};
+  private formatDate(timestamp: number): string {
+    return moment.unix(timestamp).format('YYYY-MM-DD HH:mm:ss');
   }
 
-  async testGPT(query: string) {
-    const completion = await this.openai.chat.completions.create({
-      messages: [{ role: 'system', content: query }],
-      model: 'gpt-3.5-turbo',
-    });
-
-    console.log(completion);
-    return completion;
-  }
-
-  async getByDate(startDate: string, endDate: string) {
+  async insertIntoDB(request: string, gptModel: string, user: string, status: boolean, data: any): Promise<any> {
     try {
-      console.log(startDate, endDate);
+      return await this.client.insert({
+        table: 'gpt_response_db',
+        values: [
+          {
+            request: request,
+            model: gptModel,
+            status: status,
+            prompt_tokens: status ? data.usage.prompt_tokens : 0,
+            completion_tokens: status ? data.usage.completion_tokens : 0,
+            total_tokens: status ? data.usage.total_tokens : 0,
+            response: status ? data.choices[0].message.content : "Failed to generate response.",
+            created_at: this.formatDate(status ? data.created : Math.floor(Date.now() / 1000)),
+            user: user,
+          },
+        ],
+        format: 'JSONEachRow',
+      });
+    } catch (insertError) {
+      console.error(insertError);
+    }
+  }
+
+  async generateResponseAndInsertIntoDB(request: string, gptModel: string, user: string): Promise<any> {
+    try {
+      const data = await this.generateGptResponse(request);
+      const test = await this.insertIntoDB(request, gptModel, user, true, data);
+      return {test, data};
+    } catch (gptError) {
+      console.error(gptError);
+      await this.insertIntoDB(request, gptModel, user, false, null);
+      throw gptError;
+    }
+  }
+
+  async generateGptResponse(query: string): Promise<any> {
+    try {
+      const completion = await this.openai.chat.completions.create({
+        messages: [{ role: 'system', content: query }],
+        model: 'gpt-3.5-turbo',
+      });
+      return completion;
+    } catch (error) {
+      console.error(error);
+      throw new Error('gptError');
+    }
+  }
+
+  async fetchRecordsByDateRange(startDate: string, endDate: string): Promise<any> {
+    try {
       const query = `
           SELECT *
           FROM gpt_response_db
@@ -73,9 +87,7 @@ export class BackendService {
       });
       const data = await result.json();
       return data;
-
     } catch (error) {
-      // Handle errors
       console.error(error);
       throw error;
     }
