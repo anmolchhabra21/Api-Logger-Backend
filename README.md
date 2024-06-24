@@ -1,9 +1,7 @@
 
 ## Project Video
 
-```bash
-https://www.loom.com/share/607a5a4afb4a4f8fbcdc6b9a442aa142?sid=4087efcb-e0d2-4699-82be-e075d54d4a5e
-```
+[Video](https://www.loom.com/share/607a5a4afb4a4f8fbcdc6b9a442aa142?sid=4087efcb-e0d2-4699-82be-e075d54d4a5e)
 ## Installation
 
 ```bash
